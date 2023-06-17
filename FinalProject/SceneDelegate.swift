@@ -17,9 +17,18 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         self.window = UIWindow(windowScene: windowScene)
         self.window?.backgroundColor = .systemBackground
-        let vc = ViewController()
+        let storyboard = UIStoryboard(name: "My", bundle: .main)
+        if let token = try? KeyChainService().getToken(identifier: "access_token") {
+            AppDelegate.shared().token = token
+            let vc = storyboard.instantiateViewController(withIdentifier: "Friends")
+            let navVC = UINavigationController(rootViewController: vc)
+            self.window?.rootViewController = navVC
+            self.window?.makeKeyAndVisible()
+        } else {
+        let vc = AuthViewController()
         self.window?.rootViewController = vc
         self.window?.makeKeyAndVisible()
+        }
     }
 }
 
