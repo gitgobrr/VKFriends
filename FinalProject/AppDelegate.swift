@@ -24,7 +24,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         try? KeyChainService().insertToken(data, identifier: "access_token")
         let storyboard = UIStoryboard(name: "My", bundle: .main)
         self.token = key
-        window?.rootViewController = storyboard.instantiateViewController(withIdentifier: "Friends")
+        if let vc = storyboard.instantiateViewController(withIdentifier: "Friends") as? ViewController {
+            window?.rootViewController = vc
+            vc.profileModel.loadProfile(1)
+        }
         return true
     }
     
@@ -37,11 +40,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             self.window?.backgroundColor = .white
             if let token = try? KeyChainService().getToken(identifier: "access_token") {
                 self.token = token
-                let vc = storyboard.instantiateViewController(withIdentifier: "Friends")
-                let navVC = UINavigationController(rootViewController: vc)
-                self.window?.rootViewController = navVC
-                self.window?.makeKeyAndVisible()
-                return true
+                if let vc = storyboard.instantiateViewController(withIdentifier: "Friends") as? ViewController {
+                    window?.rootViewController = vc
+                    vc.profileModel.loadProfile(1)
+                    let navVC = UINavigationController(rootViewController: vc)
+                    self.window?.rootViewController = navVC
+                    self.window?.makeKeyAndVisible()
+                    return true
+                }
             } else {
                 let vc = AuthViewController()
                 self.window?.rootViewController = vc

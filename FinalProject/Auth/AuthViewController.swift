@@ -29,9 +29,11 @@ final class AuthViewController: UIViewController {
             try KeyChainService().insertToken(data, identifier: "access_token")
             AppDelegate.shared().token = key
             let storyboard = UIStoryboard(name: "My", bundle: .main)
-            let vc = storyboard.instantiateViewController(withIdentifier: "Friends")
-            let navVC = UINavigationController(rootViewController: vc)
-            self.view.window?.rootViewController = navVC
+            if let vc = storyboard.instantiateViewController(withIdentifier: "Friends") as? ViewController {
+                let navVC = UINavigationController(rootViewController: vc)
+                self.view.window?.rootViewController = navVC
+                vc.profileModel.loadProfile(1)
+            }
         } catch {
             let alert = UIAlertController(title: "Error", message: error.localizedDescription, preferredStyle: .alert)
             self.present(alert, animated: true)

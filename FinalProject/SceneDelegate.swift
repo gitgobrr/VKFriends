@@ -19,10 +19,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let storyboard = UIStoryboard(name: "My", bundle: .main)
         if let token = try? KeyChainService().getToken(identifier: "access_token") {
             AppDelegate.shared().token = token
-            let vc = storyboard.instantiateViewController(withIdentifier: "Friends")
-            let navVC = UINavigationController(rootViewController: vc)
-            self.window?.rootViewController = navVC
-            self.window?.makeKeyAndVisible()
+            if let vc = storyboard.instantiateViewController(withIdentifier: "Friends") as? ViewController {
+                let navVC = UINavigationController(rootViewController: vc)
+                self.window?.rootViewController = navVC
+                self.window?.makeKeyAndVisible()
+                vc.profileModel.loadProfile(1)
+            }
         } else {
             let vc = AuthViewController()
             self.window?.rootViewController = vc

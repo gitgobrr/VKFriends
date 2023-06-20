@@ -62,7 +62,7 @@ class ViewController: UIViewController {
         friendsTableView.prefetchDataSource = self
         
         profileModel.delegate = self
-        profileModel.loadProfile(1)
+//        profileModel.loadProfile(1)
     }
     
     let profileModel = Profile()
@@ -112,16 +112,21 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         
-        let cell = tableView.cellForRow(at: indexPath)
-        if cell?.reuseIdentifier == "info cell" {
-            var strToCopy = cell?.textLabel?.text
-            strToCopy?.removeFirst(4)
-            UIPasteboard.general.string = strToCopy
-            return
+//        let cell = tableView.cellForRow(at: indexPath)
+//        if cell?.reuseIdentifier == "info cell" {
+//            var strToCopy = cell?.textLabel?.text
+//            strToCopy?.removeFirst(4)
+//            UIPasteboard.general.string = strToCopy
+//            return
+//        }
+//
+//        friendList[indexPath.section].isCollapsed.toggle()
+//        tableView.reloadSections([indexPath.section], with: .automatic)
+        let storyboard = UIStoryboard(name: "My", bundle: .main)
+        if let vc = storyboard.instantiateViewController(withIdentifier: "Friends") as? ViewController {
+            navigationController?.pushViewController(vc, animated: true)
+            vc.profileModel.loadProfile((friendList[indexPath.section].id))
         }
-        
-        friendList[indexPath.section].isCollapsed.toggle()
-        tableView.reloadSections([indexPath.section], with: .automatic)
     }
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
