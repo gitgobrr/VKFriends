@@ -29,18 +29,6 @@ enum API {
         case friends
         case offline
     }
-    
-    
-    
-//    static let accessToken = configurationVariable(named: "ACCESS_TOKEN")
-//
-//    private static func configurationVariable(named: String) -> String? {
-//        guard let value = Bundle.main.infoDictionary?[named] as? String else {
-//            print("Missing Configuration Variable: '\(named)'")
-//            return nil
-//        }
-//        return value
-//    }
 }
 
 struct VKAPIError: Error, Decodable {

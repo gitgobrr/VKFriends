@@ -24,10 +24,17 @@ final class AuthViewController: UIViewController {
         guard let queryItems = URLComponents(string: "?"+fragment)?.queryItems else { return }
         
         guard let key = queryItems.first(where: {$0.name == "access_token"})?.value else { return }
+        guard let data = key.data(using: .utf8) else { return }
         do {
-            try KeyChainService().insertToken(key.data(using: .utf8)!, identifier: "access_token")
+            try KeyChainService().insertToken(data, identifier: "access_token")
+            AppDelegate.shared().token = key
+            let storyboard = UIStoryboard(name: "My", bundle: .main)
+            let vc = storyboard.instantiateViewController(withIdentifier: "Friends")
+            let navVC = UINavigationController(rootViewController: vc)
+            self.view.window?.rootViewController = navVC
         } catch {
-            print(error, "eror")
+            let alert = UIAlertController(title: "Error", message: error.localizedDescription, preferredStyle: .alert)
+            self.present(alert, animated: true)
         }
     }
     
