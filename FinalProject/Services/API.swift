@@ -23,6 +23,7 @@ enum API {
         case online = "online"
         case photo100 = "photo_100"
         case photoMax = "photo_max"
+        case count
     }
     
     enum Scope: String {

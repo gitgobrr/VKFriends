@@ -8,77 +8,102 @@
 
 import Foundation
 import Alamofire
+import UIKit
 
 protocol ProfileDelegate {
     func updateUser(_ user: User)
-    func updateFriends(_ friends: [User])
+    func updateFriends()
     func displayError(_ errorMessage: String)
 }
 
 class Profile {
     var user: User?
+        // add count property and assign a value to it in request completion handler
+    // do all computed properties
     var friends: [User] = []
-    var onlineFriends: [User] = []
-    var offlineFriends: [User] = []
+    
+    var onlineFriends: [User] {
+        friends.filter { $0.isOnline() }
+    }
+    var offlineFriends: [User] {
+        friends.filter { !$0.isOnline() }
+    }
+    
+    var friendCount = 0
     
     var delegate: ProfileDelegate?
     
     //MARK: Methods for network calls
     
-    func fetchData<T: Decodable>(_ endpoint: Endpoint<T>, completion: @escaping (AFDataResponse<T>) -> Void) {
-        AF.request(endpoint.url!).responseDecodable(completionHandler: completion)
+    func fetchData<T: Decodable>(_ endpoint: Endpoint<T>, completion: @escaping (T) -> Void) {
+        AF.request(endpoint.url!).responseDecodable(of: T.self) { dataResponse in
+            switch dataResponse.result {
+            case .success(let decodable):
+                return completion(decodable)
+            case .failure(let afError):
+                print(afError)
+                if let vkError = VKAPIError.decode(data: dataResponse.data) {
+                    self.delegate?.displayError(vkError.errorMsg)
+                } else {
+                    self.delegate?.displayError(afError.failureReason ?? afError.localizedDescription)
+                    print("Printing body of failed response: ",String(data: dataResponse.data!, encoding: .utf8) ?? "no data",terminator: "\n")
+                }
+            }
+        }
     }
     
     func loadProfile(_ id: Int) {
-        if id == user?.id { return }
-        friends = []
-        onlineFriends = []
-        offlineFriends = []
-        fetchData(.getUser(by: id)) { response in
-            switch response.result {
-            case .success(let response):
-                guard let user = response.response.first else {
-                    self.delegate?.displayError("User not found")
-                    return
-                }
-                self.user = user
+        if id == user?.id {
+            if let user = user {
                 self.delegate?.updateUser(user)
-            case .failure:
-                self.delegate?.displayError("user is deactivated")
+                self.delegate?.updateFriends()
+            }
+            return
+        }
+        friends = []
+//        onlineFriends = []
+//        offlineFriends = []
+        fetchData(.getUser(by: id)) { (dataResponse) in
+            guard let user = dataResponse.response.first else {
+                self.delegate?.displayError("User not found")
                 return
             }
+            self.user = user
+            self.delegate?.updateUser(user)
+            self.loadFriends(user)
         }
     }
     
-    func loadFriends(of user: User) {
-        fetchData(.getFriends(of: user)) { response in
-            switch response.result {
-            case .success(let response):
-                self.friends = response.response.items
-                self.onlineFriends.removeAll()
-                self.offlineFriends.removeAll()
-                for user in self.friends {
-                    user.isOnline() ? self.onlineFriends.append(user) : self.offlineFriends.append(user)
-                }
-                self.delegate?.updateFriends(response.response.items)
+    func loadFriends(_ user: User) {
+        fetchData(.getFriends(of: user, offset: friends.count)) { (dataResponse) in
+            let fetchedFriends = dataResponse.response.items
+            self.friendCount = dataResponse.response.count
+            self.friends.append(contentsOf: fetchedFriends)
+//            self.onlineFriends.removeAll()
+//            self.offlineFriends.removeAll()
+//            for user in self.friends {
+//                user.isOnline() ? self.onlineFriends.append(user) : self.offlineFriends.append(user)
+//            }
+            self.delegate?.updateFriends()
+        }
+    }
+    
+    func loadImage(url: URL, completionHandler: @escaping (UIImage?) -> Void) -> DataRequest? {
+        if let image = cache[url] {
+            completionHandler(image)
+            return nil
+        }
+        let request = AF.request(url).responseData { dataResponse in
+            switch dataResponse.result {
+            case .success(let data):
+                return completionHandler(UIImage(data: data))
             case .failure(let error):
-                self.delegate?.displayError(error.localizedDescription)
-                return
+                return print(error.failureReason ?? error.localizedDescription)
             }
         }
+        return request
     }
     
-    func loadImage(url: URL, completionHandler: @escaping (Data) -> Void) {
-        AF.request(url).responseData(queue: .main) { data in
-            switch data.result {
-            case .success(let image):
-                completionHandler(image)
-            case .failure(let error):
-                self.delegate?.displayError(error.localizedDescription)
-                return
-            }
-        }
-    }
-    
+    var imageRequests: [IndexPath:DataRequest] = [:]
+    var cache: [URL:UIImage] = [:]
 }
-

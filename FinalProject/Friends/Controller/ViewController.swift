@@ -35,12 +35,15 @@ class ViewController: UIViewController {
         } else {
             self.friendsCount.text = "\(friendList.count) Friends"
         }
+        if self.option.selectedSegmentIndex == 0 {
+            friendsCount.text = "\(profileModel.friendCount) Friends"
+        }
         self.friendsTableView.reloadData()
     }
     
     @IBAction func refresh() {
         guard let user = profileModel.user else { return }
-        profileModel.loadFriends(of: user)
+        profileModel.loadFriends(user)
     }
     
     @IBAction func findById(_ sender: UITextField) {
@@ -55,9 +58,11 @@ class ViewController: UIViewController {
         userFName.text = ""
         userLName.text = ""
         friendsCount.text = ""
+        friendsCount.adjustsFontSizeToFitWidth = true
+        friendsTableView.prefetchDataSource = self
+        
         profileModel.delegate = self
         profileModel.loadProfile(1)
-        friendsCount.adjustsFontSizeToFitWidth = true
     }
     
     let profileModel = Profile()
@@ -82,10 +87,17 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
         let user = friendList[indexPath.section]
         if indexPath.row == 0 {
             let cell = friendsTableView.dequeueReusableCell(withIdentifier: "user cell")! as! UserCell
-            cell.userName.text = user.name()
-            profileModel.loadImage(url: user.photo100) { image in
-                cell.img.image = UIImage(data: image)
-                cell.img.roundImage()
+            cell.updateCellText(user.name())
+            let request = profileModel.loadImage(url: user.photo100) { image in
+                self.profileModel.cache[user.photo100] = image
+                cell.updateCellImage(image)
+                self.profileModel.imageRequests.removeValue(forKey: indexPath)
+            }
+            profileModel.imageRequests[indexPath] = request
+            cell.onReuse = {
+                self.profileModel.imageRequests[indexPath]?.cancel()
+                self.profileModel.imageRequests.removeValue(forKey: indexPath)
+                cell.updateCellImage(nil)
             }
             return cell
         } else {
@@ -112,6 +124,14 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
         tableView.reloadSections([indexPath.section], with: .automatic)
     }
     
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        if friendList.count < profileModel.friendCount {
+            if indexPath.section == profileModel.friends.count - 1 {
+                profileModel.loadFriends(profileModel.user!)
+            }
+        }
+    }
+    
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         if indexPath.row > 0 { return 44 }
         return 53
@@ -125,37 +145,47 @@ extension ViewController: ProfileDelegate {
     func updateUser(_ user: User) {
         userFName.text = user.firstName
         userLName.text = user.lastName
-        profileModel.loadImage(url: user.photoMax) { imageData in
-            self.userImage.image = UIImage(data: imageData)
+        profileModel.loadImage(url: user.photoMax) { image in
+            self.userImage.image = image
             self.userImage.roundImage()
         }
-        if user.isClosed != nil {
-            if user.isClosed! {
-                friendsCount.text = "profile is private"
-                friendList = []
-                friendsTableView.reloadData()
-                return
-            }
-        } else {
-            friendsCount.text = "profile deactivated"
-            friendList = []
-            friendsTableView.reloadData()
-            return
+        if friendList.count > 0 {
+        friendsTableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
         }
-        profileModel.loadFriends(of: user)
     }
     
-    func updateFriends(_ friends: [User]) {
-        friendList = friends
-        friendsCount.text = friends.count == 1 ? "1 Friend" : "\(friends.count) Friends"
+    func updateFriends() {
+        friendList = profileModel.friends
+        friendsCount.text = profileModel.friendCount == 1 ? "1 Friend" : "\(profileModel.friendCount) Friends"
         option.selectedSegmentIndex = 0
         friendsTableView.reloadData()
-        if friends.count > 0 {
-            friendsTableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
-        }
     }
     
     func displayError(_ errorMessage: String) {
         friendsCount.text = errorMessage
+    }
+}
+
+// MARK: UITableViewDataSourcePrefetching
+
+extension ViewController: UITableViewDataSourcePrefetching {
+    func tableView(_ tableView: UITableView, prefetchRowsAt indexPaths: [IndexPath]) {
+        for indexPath in indexPaths {
+            let user = friendList[indexPath.section]
+            guard let _ = profileModel.imageRequests[indexPath] else {
+                profileModel.imageRequests[indexPath] = profileModel.loadImage(url: user.photo100, completionHandler: { image in
+                    self.profileModel.cache[user.photo100] = image
+                })
+                return
+            }
+        }
+    }
+    func tableView(_ tableView: UITableView, cancelPrefetchingForRowsAt indexPaths: [IndexPath]) {
+        for indexPath in indexPaths {
+            if let request = profileModel.imageRequests[indexPath] {
+                request.cancel()
+                profileModel.imageRequests.removeValue(forKey: indexPath)
+            }
+        }
     }
 }

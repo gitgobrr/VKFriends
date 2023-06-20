@@ -28,15 +28,17 @@ extension Endpoint where T: Decodable {
         )
     }
 
-    static func getFriends(of user: User) -> Endpoint<FriendsGetResponse> {
-        let fields = [API.Field](arrayLiteral: .firstName,.lastName,.photo100,.photoMax,.online)
+    static func getFriends(of user: User, offset: Int = 0) -> Endpoint<FriendsGetResponse> {
+        let fields = [API.Field](arrayLiteral: .firstName,.lastName,.photo100,.photoMax,.online,.count)
             .map { $0.rawValue }
             .joined(separator: ",")
         return Endpoint<FriendsGetResponse>(
             path: API.friendsGetPath,
             queryItems: [
                 URLQueryItem(name: "user_id", value: String(user.id)),
-                URLQueryItem(name: "fields", value: fields+",count"),
+                URLQueryItem(name: "fields", value: fields),
+                URLQueryItem(name: "count", value: "100"),
+                URLQueryItem(name: "offset", value: String(offset)),
                 URLQueryItem(name: "v", value: API.version),
                 URLQueryItem(name: "access_token", value: AppDelegate.shared().token)
             ]
