@@ -3,6 +3,11 @@
     <entity name="UserImage" representedClassName=".UserImage" syncable="YES">
         <attribute name="image" optional="YES" attributeType="Transformable" customClassName="UIImage"/>
         <attribute name="url" attributeType="URI"/>
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="url"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
     </entity>
     <elements>
         <element name="UserImage" positionX="-63" positionY="-18" width="128" height="59"/>

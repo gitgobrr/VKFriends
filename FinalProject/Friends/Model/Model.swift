@@ -95,6 +95,7 @@ class Profile {
             if let coreItem = try CoreDataManager.shared.mainContext.fetch(request).first {
                 completionHandler(coreItem.image)
                 print("loaded from core data")
+                return nil
             }
         } catch {
             print(error.localizedDescription)
@@ -117,3 +118,30 @@ class Profile {
     var imageRequests: [IndexPath:DataRequest] = [:]
 //    var cache: [URL:UIImage] = [:]
 }
+
+
+/*
+ init() {
+         do {
+             let request = UserImage.fetchRequest()
+ //            request.predicate = .init(format: "url = %@", url as CVarArg)
+             let coreItems = try CoreDataManager.shared.mainContext.fetch(request)
+ //                completionHandler(coreItem.image)
+                 print("loaded from core data")
+             
+             coreItems.forEach { userImage in
+                 guard let url = userImage.url,
+                       let image = userImage.image
+                 else {
+                     return
+                 }
+                 cache[url] = image
+             }
+         } catch {
+             print(error.localizedDescription)
+         }
+ }
+ 
+ var imageRequests: [IndexPath:DataRequest] = [:]
+ var cache: [URL:UIImage] = [:]
+ */

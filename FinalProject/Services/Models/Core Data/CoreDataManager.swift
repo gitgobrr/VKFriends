@@ -21,6 +21,7 @@ class CoreDataManager {
         return container
     }()
     lazy var mainContext: NSManagedObjectContext = {
+        persistentContainer.viewContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
         return persistentContainer.viewContext
     }()
     func saveContext() {
