@@ -69,6 +69,8 @@ class ViewController: UIViewController {
     
     var friendList: [User] = []
     
+    private let coreDataManager = CoreDataManager.shared
+    
 }
 
 extension ViewController: UITableViewDelegate, UITableViewDataSource {
@@ -89,7 +91,11 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
             let cell = friendsTableView.dequeueReusableCell(withIdentifier: "user cell")! as! UserCell
             cell.updateCellText(user.name())
             let request = profileModel.loadImage(url: user.photo100) { image in
-                self.profileModel.cache[user.photo100] = image
+                let userImg = UserImage(context: self.coreDataManager.mainContext)
+                userImg.url = user.photo100
+                userImg.image = image
+                self.coreDataManager.saveContext()
+//                self.profileModel.cache[user.photo100] = image
                 cell.updateCellImage(image)
                 self.profileModel.imageRequests.removeValue(forKey: indexPath)
             }
@@ -179,7 +185,11 @@ extension ViewController: UITableViewDataSourcePrefetching {
             let user = friendList[indexPath.section]
             guard let _ = profileModel.imageRequests[indexPath] else {
                 profileModel.imageRequests[indexPath] = profileModel.loadImage(url: user.photo100, completionHandler: { image in
-                    self.profileModel.cache[user.photo100] = image
+                    let userImg = UserImage(context: self.coreDataManager.mainContext)
+                    userImg.url = user.photo100
+                    userImg.image = image
+                    self.coreDataManager.saveContext()
+//                    self.profileModel.cache[user.photo100] = image
                 })
                 return
             }

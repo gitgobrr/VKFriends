@@ -24,6 +24,11 @@ final class AuthViewController: UIViewController {
         guard let queryItems = URLComponents(string: "?"+fragment)?.queryItems else { return }
         
         guard let key = queryItems.first(where: {$0.name == "access_token"})?.value else { return }
+        if let expiresIn = queryItems.first(where: {$0.name == "expires_in"})?.value,
+           let interval = TimeInterval(expiresIn) {
+            let expireDate = Date.init(timeIntervalSinceNow: interval)
+            UserDefaults.standard.set(expireDate, forKey: "expireDate")
+        }
         guard let data = key.data(using: .utf8) else { return }
         do {
             try KeyChainService().insertToken(data, identifier: "access_token")

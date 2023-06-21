@@ -17,6 +17,14 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         self.window = UIWindow(windowScene: windowScene)
         self.window?.backgroundColor = .systemBackground
         let storyboard = UIStoryboard(name: "My", bundle: .main)
+        if let expireDate = UserDefaults.standard.value(forKey: "expireDate") as? Date {
+            if expireDate.timeIntervalSince1970 < Date().timeIntervalSince1970 {
+                let vc = AuthViewController()
+                self.window?.rootViewController = vc
+                self.window?.makeKeyAndVisible()
+                return
+            }
+        }
         if let token = try? KeyChainService().getToken(identifier: "access_token") {
             AppDelegate.shared().token = token
             if let vc = storyboard.instantiateViewController(withIdentifier: "Friends") as? ViewController {

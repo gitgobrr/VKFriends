@@ -89,10 +89,20 @@ class Profile {
     }
     
     func loadImage(url: URL, completionHandler: @escaping (UIImage?) -> Void) -> DataRequest? {
-        if let image = cache[url] {
-            completionHandler(image)
-            return nil
+        do {
+            let request = UserImage.fetchRequest()
+            request.predicate = .init(format: "url = %@", url as CVarArg)
+            if let coreItem = try CoreDataManager.shared.mainContext.fetch(request).first {
+                completionHandler(coreItem.image)
+                print("loaded from core data")
+            }
+        } catch {
+            print(error.localizedDescription)
         }
+//        if let image = cache[url] {
+//            completionHandler(image)
+//            return nil
+//        }
         let request = AF.request(url).responseData { dataResponse in
             switch dataResponse.result {
             case .success(let data):
@@ -105,5 +115,5 @@ class Profile {
     }
     
     var imageRequests: [IndexPath:DataRequest] = [:]
-    var cache: [URL:UIImage] = [:]
+//    var cache: [URL:UIImage] = [:]
 }
