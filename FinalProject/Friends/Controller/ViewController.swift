@@ -89,17 +89,12 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
         if indexPath.row == 0 {
             let cell = friendsTableView.dequeueReusableCell(withIdentifier: "user cell")! as! UserCell
             cell.updateCellText(user.name())
-            let request = profileModel.loadImage(url: user.photo100) { image in
-                let userImg = ImageURL(context: self.coreDataManager.mainContext)
-                userImg.url = user.photo100.lastPathComponent
-                self.coreDataManager.saveContext()
+            profileModel.loadImage(url: user.photo100) { image in
                 cell.updateCellImage(image)
-                self.profileModel.imageRequests.removeValue(forKey: indexPath)
             }
-            profileModel.imageRequests[indexPath] = request
             cell.onReuse = {
-                self.profileModel.imageRequests[indexPath]?.cancel()
-                self.profileModel.imageRequests.removeValue(forKey: indexPath)
+                self.profileModel.imageRequests[user.photo100]?.cancel()
+                self.profileModel.imageRequests.removeValue(forKey: user.photo100)
                 cell.updateCellImage(nil)
             }
             return cell
@@ -168,22 +163,16 @@ extension ViewController: ProfileDelegate {
 extension ViewController: UITableViewDataSourcePrefetching {
     func tableView(_ tableView: UITableView, prefetchRowsAt indexPaths: [IndexPath]) {
         for indexPath in indexPaths {
-            let user = friendList[indexPath.section]
-            guard let _ = profileModel.imageRequests[indexPath] else {
-                profileModel.imageRequests[indexPath] = profileModel.loadImage(url: user.photo100, completionHandler: { image in
-                    let userImg = ImageURL(context: self.coreDataManager.mainContext)
-                    userImg.url = user.photo100.lastPathComponent
-                    self.coreDataManager.saveContext()
-                })
-                return
-            }
+            let url = friendList[indexPath.section].photo100
+            profileModel.loadImage(url: url)
         }
     }
     func tableView(_ tableView: UITableView, cancelPrefetchingForRowsAt indexPaths: [IndexPath]) {
         for indexPath in indexPaths {
-            if let request = profileModel.imageRequests[indexPath] {
+            let url = friendList[indexPath.section].photo100
+            if let request = profileModel.imageRequests[url] {
                 request.cancel()
-                profileModel.imageRequests.removeValue(forKey: indexPath)
+                profileModel.imageRequests.removeValue(forKey: url)
             }
         }
     }

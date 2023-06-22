@@ -32,6 +32,8 @@ class Profile {
     
     var delegate: ProfileDelegate?
     
+    let coreDataManager = CoreDataManager.shared
+    
     //MARK: Methods for network calls
     
     func fetchData<T: Decodable>(_ endpoint: Endpoint<T>, completion: @escaping (T) -> Void) {
@@ -80,16 +82,17 @@ class Profile {
         }
     }
     
-    func loadImage(url: URL, completionHandler: @escaping (UIImage?) -> Void) -> DataRequest? {
+    func loadImage(url: URL, completionHandler: ((UIImage?) -> Void)? = nil) {
+        guard imageRequests[url] == nil else { return }
         do {
             let request = ImageURL.fetchRequest()
             request.predicate = .init(format: "url = %@", url as CVarArg)
             if let path = try CoreDataManager.shared.mainContext.fetch(request).first?.url {
                 guard let data = DocumentsModel.read(from: path) else {
-                    return nil
+                    return
                 }
-                completionHandler(UIImage(data: data))
-                print("loaded from core data")
+                completionHandler?(UIImage(data: data))
+                return
             }
         } catch {
             print(error.localizedDescription)
@@ -97,14 +100,22 @@ class Profile {
         let request = AF.request(url).responseData { dataResponse in
             switch dataResponse.result {
             case .success(let data):
+                // cache image
                 DocumentsModel.write(data: data, with: url.lastPathComponent)
-                return completionHandler(UIImage(data: data))
+                // save url to core data
+                let userImg = ImageURL(context: self.coreDataManager.mainContext)
+                userImg.url = url.lastPathComponent
+                self.coreDataManager.saveContext()
+                // remove request
+                self.imageRequests.removeValue(forKey: url)
+                // call completion handler
+                completionHandler?(UIImage(data: data))
             case .failure(let error):
                 return print(error.failureReason ?? error.localizedDescription)
             }
         }
-        return request
+        imageRequests[url] = request
     }
     
-    var imageRequests: [IndexPath:DataRequest] = [:]
+    var imageRequests: [URL:DataRequest] = [:]
 }
