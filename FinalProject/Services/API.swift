@@ -33,6 +33,7 @@ enum API {
 }
 
 struct VKAPIError: Error, Decodable {
+    let errorCode: Int
     let errorMsg: String
     
     static func decode(data: Data?) -> Self? {

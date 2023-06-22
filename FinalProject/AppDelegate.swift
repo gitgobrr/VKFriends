@@ -38,7 +38,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        
+        let defaults = UserDefaults.standard
+        if !defaults.bool(forKey: "isFirstLaunch") {
+            defaults.set(true, forKey: "isFirstLaunch")
+            DocumentsModel.createFolder(with: "cache")
+        }
         let storyboard = UIStoryboard(name: "My", bundle: .main)
         if #unavailable(iOS 13) {
             self.window = UIWindow()

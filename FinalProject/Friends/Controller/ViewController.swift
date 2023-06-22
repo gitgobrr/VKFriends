@@ -62,7 +62,6 @@ class ViewController: UIViewController {
         friendsTableView.prefetchDataSource = self
         
         profileModel.delegate = self
-//        profileModel.loadProfile(1)
     }
     
     let profileModel = Profile()
@@ -91,11 +90,9 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
             let cell = friendsTableView.dequeueReusableCell(withIdentifier: "user cell")! as! UserCell
             cell.updateCellText(user.name())
             let request = profileModel.loadImage(url: user.photo100) { image in
-                let userImg = UserImage(context: self.coreDataManager.mainContext)
-                userImg.url = user.photo100
-                userImg.image = image
+                let userImg = ImageURL(context: self.coreDataManager.mainContext)
+                userImg.url = user.photo100.lastPathComponent
                 self.coreDataManager.saveContext()
-//                self.profileModel.cache[user.photo100] = image
                 cell.updateCellImage(image)
                 self.profileModel.imageRequests.removeValue(forKey: indexPath)
             }
@@ -117,17 +114,6 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        
-//        let cell = tableView.cellForRow(at: indexPath)
-//        if cell?.reuseIdentifier == "info cell" {
-//            var strToCopy = cell?.textLabel?.text
-//            strToCopy?.removeFirst(4)
-//            UIPasteboard.general.string = strToCopy
-//            return
-//        }
-//
-//        friendList[indexPath.section].isCollapsed.toggle()
-//        tableView.reloadSections([indexPath.section], with: .automatic)
         let storyboard = UIStoryboard(name: "My", bundle: .main)
         if let vc = storyboard.instantiateViewController(withIdentifier: "Friends") as? ViewController {
             navigationController?.pushViewController(vc, animated: true)
@@ -185,11 +171,9 @@ extension ViewController: UITableViewDataSourcePrefetching {
             let user = friendList[indexPath.section]
             guard let _ = profileModel.imageRequests[indexPath] else {
                 profileModel.imageRequests[indexPath] = profileModel.loadImage(url: user.photo100, completionHandler: { image in
-                    let userImg = UserImage(context: self.coreDataManager.mainContext)
-                    userImg.url = user.photo100
-                    userImg.image = image
+                    let userImg = ImageURL(context: self.coreDataManager.mainContext)
+                    userImg.url = user.photo100.lastPathComponent
                     self.coreDataManager.saveContext()
-//                    self.profileModel.cache[user.photo100] = image
                 })
                 return
             }
