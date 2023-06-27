@@ -74,6 +74,7 @@ final class AuthViewController: UIViewController {
         guard let url = URL(string: API.vkAuthorizeURL) else {
             return
         }
+        try? KeyChainService().deleteToken(identifier: "access_token")
         if app.canOpenURL(url) {
             guard var components = URLComponents(string: API.vkAuthorizeURL) else {
                 return
@@ -84,9 +85,7 @@ final class AuthViewController: UIViewController {
             guard let url = components.url else {
                 return
             }
-            app.open(url) { result in
-                print("completion",result)
-            }
+            app.open(url)
         } else {
             guard let url = URL(string: "https://oauth.vk.com/authorize?revoke=1&response_type=token&display=mobile&scope=friends&v=\(API.version)&redirect_uri=https://oauth.vk.com/blank.html&client_id=\(appID)") else {
                 return

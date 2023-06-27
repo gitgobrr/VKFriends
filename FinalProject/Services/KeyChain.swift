@@ -21,8 +21,22 @@ class KeyChainService {
 
     /// A service that can be used to group the tokens
     /// as the kSecAttrAccount should be unique.
-    static let service = "com.vk.auth"
-    
+    static let service = "com.vk.auth"    
+    func deleteToken(identifier: String, service: String = service) throws {
+        let query = [
+            kSecClass: kSecClassGenericPassword,
+            kSecAttrService: service,
+            kSecAttrAccount: identifier
+        ] as CFDictionary
+
+        let status = SecItemDelete(query)
+        guard status == errSecSuccess else {
+            if status == errSecDuplicateItem {
+                throw KeychainError.duplicateItem
+            }
+            throw KeychainError.unexpectedStatus(status)
+        }
+    }
     func insertToken(_ token: Data, identifier: String, service: String = service) throws {
         let attributes = [
             kSecClass: kSecClassGenericPassword,

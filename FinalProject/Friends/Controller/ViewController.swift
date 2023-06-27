@@ -156,6 +156,19 @@ extension ViewController: ProfileDelegate {
     func displayError(_ errorMessage: String) {
         friendsCount.text = errorMessage
     }
+    
+    func alert(_ message: String) {
+        let alertVC = UIAlertController(title: "Error", message: message,preferredStyle: .actionSheet)
+        let action = UIAlertAction(title: "OK", style: .cancel)
+        alertVC.addAction(action)
+        present(alertVC, animated: true)
+    }
+    
+    func logOut() {
+        let vc = AuthViewController()
+        let window = self.view.window
+        window?.rootViewController = vc
+    }
 }
 
 // MARK: UITableViewDataSourcePrefetching

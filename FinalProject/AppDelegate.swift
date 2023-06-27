@@ -30,7 +30,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         let storyboard = UIStoryboard(name: "My", bundle: .main)
         self.token = key
         if let vc = storyboard.instantiateViewController(withIdentifier: "Friends") as? ViewController {
-            window?.rootViewController = vc
+            let navVC = UINavigationController(rootViewController: vc)
+            window?.rootViewController = navVC
             vc.profileModel.loadProfile(1)
         }
         return true

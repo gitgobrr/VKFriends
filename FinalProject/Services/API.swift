@@ -33,8 +33,22 @@ enum API {
 }
 
 struct VKAPIError: Error, Decodable {
-    let errorCode: Int
+    let errorCode: VKErrorCode
     let errorMsg: String
+    
+    enum VKErrorCode: Int, Decodable {
+        case authError = 5
+        case someError
+        init(from decoder: Decoder) throws {
+            let container = try decoder.singleValueContainer()
+            let code = try container.decode(Int.self)
+            if code == 5 {
+                self = .authError
+            } else {
+                self = .someError
+            }
+        }
+    }
     
     static func decode(data: Data?) -> Self? {
         guard let data = data else { return nil }

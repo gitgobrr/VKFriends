@@ -14,6 +14,8 @@ protocol ProfileDelegate {
     func updateUser(_ user: User)
     func updateFriends()
     func displayError(_ errorMessage: String)
+    func alert(_ message: String)
+    func logOut()
 }
 
 class Profile {
@@ -44,6 +46,10 @@ class Profile {
             case .failure(let afError):
                 print(afError)
                 if let vkError = VKAPIError.decode(data: dataResponse.data) {
+                    if vkError.errorCode == .authError {
+                        self.delegate?.alert(vkError.errorMsg)
+                        self.delegate?.logOut()
+                    }
                     self.delegate?.displayError(vkError.errorMsg)
                 } else {
                     self.delegate?.displayError(afError.failureReason ?? afError.localizedDescription)
