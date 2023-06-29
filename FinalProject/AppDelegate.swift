@@ -49,20 +49,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             self.window = UIWindow()
             self.window?.backgroundColor = .white
             if let expireDate = UserDefaults.standard.value(forKey: "expireDate") as? Date {
-                if expireDate.timeIntervalSince1970 < Date().timeIntervalSince1970 {
+                guard Date().timeIntervalSince1970 < expireDate.timeIntervalSince1970 else {
                     let vc = AuthViewController()
                     self.window?.rootViewController = vc
                     self.window?.makeKeyAndVisible()
+                    return true
                 }
             }
             if let token = try? KeyChainService().getToken(identifier: "access_token") {
                 self.token = token
                 if let vc = storyboard.instantiateViewController(withIdentifier: "Friends") as? ViewController {
-                    window?.rootViewController = vc
-                    vc.profileModel.loadProfile(1)
                     let navVC = UINavigationController(rootViewController: vc)
                     self.window?.rootViewController = navVC
                     self.window?.makeKeyAndVisible()
+                    vc.profileModel.loadProfile(1)
                     return true
                 }
             } else {
